@@ -1,5 +1,3 @@
-# Не забути видалі мої коментарі !!!!!
-
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.parse
 import mimetypes
@@ -28,8 +26,8 @@ class HttpHandler(BaseHTTPRequestHandler):
         Parses the request path via urllib and determines which page
         or resource to return to the user (routing).
         """
-        pr_url = urllib.parse.urlparse(self.path) # Витягуємо із юрл чистий шлях
-        match pr_url.path: # Розбиваємо маршрутизацію
+        pr_url = urllib.parse.urlparse(self.path) 
+        match pr_url.path: 
             case '/':
                 self.send_html_file('front-init/index.html')
             case '/message':
@@ -48,12 +46,11 @@ class HttpHandler(BaseHTTPRequestHandler):
         to socket using the UDP protocol and redirect the user to index.html.
         """
         if self.path == '/message':
-            data = self.rfile.read(int(self.headers['Content-Length'])) # Читаємо із форми конкретну кількість байтів
-                                                                        # rfile - Це вхідний потік даних від браузера до сервера
-            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket: # Створюємо клієнтський сокет на udp протоколі який буде надсилати дані
-                client_socket.sendto(data, (SOCKET_HOST, SOCKET_PORT)) # Надсилаємо їх на наш сокет сервер
+            data = self.rfile.read(int(self.headers['Content-Length'])) # rfile - Це вхідний потік даних від браузера до сервера
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as client_socket: 
+                client_socket.sendto(data, (SOCKET_HOST, SOCKET_PORT)) 
 
-            self.send_response(302) # Після надсилання форми статус 302 повертає нас на головну сторінку завдяки Location /
+            self.send_response(302) 
             self.send_header('Location', '/')
             self.end_headers()  
         else:
@@ -67,13 +64,11 @@ class HttpHandler(BaseHTTPRequestHandler):
             filename (str): The path or location of the HTML file to be sent.
             status (int, optional): HTTP response status code. Defaults to 200.
         """
-        self.send_response(status) # Сервер повідомляє браузеру код результату
-        self.send_header('Content-type', 'text/html') # Потім говорить як контент буде виглядати, у нашому випадку це html сторінка
-        self.end_headers() # Заголовок завершується
-        with open(filename, 'rb') as fd: # Відкриваємо потрібний файл
+        self.send_response(status) 
+        self.send_header('Content-type', 'text/html') 
+        self.end_headers() 
+        with open(filename, 'rb') as fd: 
             self.wfile.write(fd.read()) # wfile це спеціальний "канал зв'язку" між сервером і браузером користувача, вимагає байти тому rb
-                                        # write() — це команда: "Візьми те, що я тобі даю (наші байти з файлу), і відправ їх через інтернет прямо в браузер"
-                                        # fd.read() - читає та зберігає в оперативну пам'ять
     def send_static(self):
         """Determine the file type and send a static resource to the client.
 
@@ -82,16 +77,15 @@ class HttpHandler(BaseHTTPRequestHandler):
         file system and writes its binary content to the output stream.
         """
         self.send_response(200)  
-        mt = mimetypes.guess_type(self.path) # Ця функція дивиться на розширення файлу в кінці URL,  Повертає кортеж в якому mt[0] це сам тип файлу, а mt[1] це кодування(прикл:.gz), але зазвичай воно None
+        mt = mimetypes.guess_type(self.path) 
         if mt:
-            self.send_header("Content-type", mt[0]) # Кажемо браузеру: "Це картинка/стиль/скрипт"
+            self.send_header("Content-type", mt[0])
         else:
-            self.send_header("Content-type", 'text/plain') # Якщо розширення немає ми кажемо що це простий текст
-        self.end_headers() # Фіналізуємо заголовок
+            self.send_header("Content-type", 'text/plain') 
+        self.end_headers() 
         file_path = pathlib.Path('front-init').joinpath(self.path[1:])
-        with open(file_path, 'rb') as file: # Відкриваємо ресурс за шляхом, {self.path} в нашому випадку це до прикладу 
-                                                # /style.css, тому ми ставимо . щоб знайти шлях в цій папці
-            self.wfile.write(file.read()) # зберігаємо в опер память та надсилаємо в наш канал зв'язку   
+        with open(file_path, 'rb') as file: 
+            self.wfile.write(file.read())
                
 def save_data_from_form(data: bytes, file_path: str):
     """Format data into a dictionary and save it to a JSON file.
@@ -106,21 +100,21 @@ def save_data_from_form(data: bytes, file_path: str):
     """  
     data_parse = urllib.parse.unquote_plus(data.decode()) # unquote_plus ця функція повертає у людський вигляд запис, але частини форми будуть розділені '&'
     try:
-        data_dict = {key: value for key, value in [el.split('=', 1) for el in data_parse.split('&')]} # Створює словник та розділяє ключі та значення
+        data_dict = {key: value for key, value in [el.split('=', 1) for el in data_parse.split('&')]} 
         time = str(datetime.now())
-        message = {time: data_dict} # Створюємо словник із часом та словником юсер + повідомлення
+        message = {time: data_dict} 
         print(message)
         with open(file_path, 'r', encoding='utf-8') as jsfile:
             try:
-                final_data_dict = json.load(jsfile) # Витягуємо уже існуючі дані з словника
-            except json.JSONDecodeError: # Якщо файл пошкоджений або порожній створюємо новий дікт
+                final_data_dict = json.load(jsfile) 
+            except json.JSONDecodeError: 
                     final_data_dict = {}
-        final_data_dict.update(message) # Оновлюєсо наш словник повідомленням
+        final_data_dict.update(message) 
         with open(file_path, 'w', encoding='utf-8') as jsfile:
-            json.dump(final_data_dict, jsfile, indent=4, ensure_ascii=False) # Записуємо наш словник в json файл
-    except ValueError as err: # Цю помилку можна схопити якщо станеться щось не те в формуванні data_dict
+            json.dump(final_data_dict, jsfile, indent=4, ensure_ascii=False) 
+    except ValueError as err: 
         logging.error(err)
-    except OSError as err: # Ця помилка може виникнути якщо не буде папки storage
+    except OSError as err: 
         logging.error(err)
     
 def run_socket_server(socket_host: str, socket_port: int):
